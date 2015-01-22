@@ -1,10 +1,10 @@
 namespace :test do
   task :default do
-    sh "set -o pipefail && xcodebuild -workspace Moses.xcworkspace -scheme Moses -sdk iphonesimulator test | xcpretty -ct"
+    sh "xcodebuild -workspace Moses.xcworkspace -scheme Moses -sdk iphonesimulator test | xcpretty -ct"
   end
 
   task :ci do
-    sh "set -o pipefail && xcodebuild -workspace Moses.xcworkspace -scheme Moses -sdk iphonesimulator test"
+    sh "xcodebuild -workspace Moses.xcworkspace -scheme Moses -sdk iphonesimulator test"
   end
 end
 
