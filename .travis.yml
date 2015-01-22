@@ -1,0 +1,6 @@
+osx_image: xcode611
+language: objective-c
+install: 
+  - bundle install
+script:
+  - bundle exec rake
