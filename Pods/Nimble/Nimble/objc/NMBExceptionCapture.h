@@ -2,7 +2,7 @@
 
 @interface NMBExceptionCapture : NSObject
 
-- (id)initWithHandler:(void(^)(NSException *))handler finally:(void(^)())finally;
+- (id)initWithHandler:(void(^)(NSException *))handler finally:(void(^)())finally ;
 - (void)tryBlock:(void(^)())unsafeBlock;
 
 @end

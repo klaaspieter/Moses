@@ -36,18 +36,18 @@ class URLRequestClientSpec : QuickSpec {
 
         it("asks the session for a POST request data task") {
             self.client.post("http://fake", parameters: [:]) { data, response, error in }
-            expect(self.session.request.HTTPMethod).toEventually(equal("POST"))
+            expect{self.session.request.HTTPMethod}.toEventually(equal("POST"))
         }
 
         it("resumes the data task") {
             self.client.post("http://fake", parameters: [:]) { data, response, error in }
-            expect(self.session.dataTask.resumed).toEventually(beTrue())
+            expect{self.session.dataTask.resumed}.toEventually(beTrue())
         }
 
         it("gets a POST request task with encoded parameters") {
             let parameters = ["key1": "value1", "key2": "value2"]
             self.client.post("http://fake", parameters: parameters) { data, response, error in }
-            expect(self.session.request.HTTPBody).toEventually(equal("key1=value1&key2=value2".dataUsingEncoding(NSUTF8StringEncoding)))
+            expect{self.session.request.HTTPBody}.toEventually(equal("key1=value1&key2=value2".dataUsingEncoding(NSUTF8StringEncoding)))
         }
     }
 }

@@ -26,7 +26,7 @@ extension NSURLComponents: URLStringConvertible {
 
 extension NSURLRequest: URLStringConvertible {
     public var URLString: String {
-        return URL.URLString
+        return URL!.URLString
     }
 }
 
@@ -46,28 +46,28 @@ public enum OAuth2Error: Int {
     case InvalidScope
     case Unknown
 
-    init(statusCode: String) {
+    static func create(#statusCode: String) -> OAuth2Error {
         switch statusCode {
         case "invalid_request":
-            self = InvalidRequest
+            return .InvalidRequest
 
         case "invalid_client":
-            self = InvalidClient
+            return .InvalidClient
 
         case "invalid_grant":
-            self = InvalidGrant
+            return .InvalidGrant
 
         case "unauthorized_client":
-            self = UnauthorizedClient
+            return .UnauthorizedClient
 
         case "unsupported_grant_type":
-            self = UnsupportedGrantType
+            return .UnsupportedGrantType
 
         case "invalid_scope":
-            self = InvalidScope
+            return .InvalidScope
 
         default:
-            self = Unknown
+            return .Unknown
         }
     }
 }
@@ -157,7 +157,7 @@ public protocol HTTPClient {
 }
 
 public class URLRequestClient : HTTPClient {
-    let session: NSURLSession = NSURLSession(configuration: NSURLSessionConfiguration.ephemeralSessionConfiguration())
+    var session: NSURLSession = NSURLSession(configuration: NSURLSessionConfiguration.ephemeralSessionConfiguration())
 
     public init() {}
     public init(session: NSURLSession) {
@@ -241,7 +241,7 @@ public struct Moses {
     }
 
     func buildToken(body: NSDictionary) -> Result<OAuthCredential, NSError> {
-        let missingKeys = ["access_token", "token_type"].filter { !contains(body.allKeys as [String], $0) }
+        let missingKeys = ["access_token", "token_type"].filter { !contains(body.allKeys as! [String], $0) }
 
         if missingKeys.count > 0 {
             let failureReason = "Required key(s) missing: \(missingKeys)"
@@ -252,9 +252,9 @@ public struct Moses {
             return Result.Failure(Box(error))
         }
 
-        let accessToken = body["access_token"] as String
+        let accessToken = body["access_token"] as! String
         let refreshToken = body["refresh_token"] as? String
-        let tokenType = body["token_type"] as String
+        let tokenType = body["token_type"] as! String
 
         var expiration: NSDate? = nil
         if let expiresIn = body["expires_in"] as? NSTimeInterval {
@@ -266,7 +266,7 @@ public struct Moses {
     }
 
     func buildError(body: NSDictionary) -> NSError {
-        let errorCode = OAuth2Error(statusCode: body["error"] as String)
+        let errorCode = OAuth2Error.create(statusCode: body["error"] as! String)
 
         var userInfo: [NSObject: AnyObject] = [:]
         if let description: AnyObject? = body["error_description"] {
@@ -287,9 +287,9 @@ public struct Moses {
                     return fail(error)
                 }
 
-                let httpResponse = response as NSHTTPURLResponse
+                let httpResponse = response as! NSHTTPURLResponse
                 if contains(200..<300, httpResponse.statusCode) || contains(400..<500, httpResponse.statusCode) {
-                    let body = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.allZeros, error: nil) as NSDictionary
+                    let body = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.allZeros, error: nil) as! NSDictionary
                     if let error: AnyObject = body["error"] {
                         fail(self.buildError(body))
                     } else {
@@ -304,7 +304,7 @@ public struct Moses {
                 } else {
                     var userInfo = [NSLocalizedDescriptionKey: "Expected status code in (200-299) or (400-499) got \(httpResponse.statusCode)"]
                     if let suggestion = NSString(data: data, encoding: NSUTF8StringEncoding) {
-                        userInfo[NSLocalizedRecoverySuggestionErrorKey] = suggestion
+                        userInfo[NSLocalizedRecoverySuggestionErrorKey] = suggestion as String
                     }
 
                     fail(NSError(domain: MosesErrorDomain, code: MosesError.InvalidResponse.rawValue, userInfo: userInfo))

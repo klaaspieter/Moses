@@ -103,7 +103,7 @@ class MosesSpec : QuickSpec {
                         expect($0) === error
                         called = true
                     }
-                    expect(called).toEventually(beTrue())
+                    expect{called}.toEventually(beTrue())
                 }
             }
 
@@ -118,7 +118,7 @@ class MosesSpec : QuickSpec {
                     var error: NSError?
                     request.failure { error = $0 }
 
-                    expect(error).toEventuallyNot(beNil())
+                    expect{error}.toEventuallyNot(beNil())
                     expect(error?.domain) == MosesErrorDomain
                     expect(error?.code) == MosesError.InvalidResponse.rawValue
                     expect(error?.localizedRecoverySuggestion) == "response body"
@@ -142,7 +142,7 @@ class MosesSpec : QuickSpec {
                     var error: NSError? = nil
                     request.failure { error = $0 }
 
-                    expect(error).toEventuallyNot(beNil())
+                    expect{error}.toEventuallyNot(beNil())
                     expect(error?.domain) == MosesErrorDomain
                     expect(error?.code) == MosesError.InvalidResponse.rawValue
                     expect(error?.localizedFailureReason).to(contain("access_token"))
@@ -157,7 +157,7 @@ class MosesSpec : QuickSpec {
                     var error: NSError? = nil
                     request.failure { error = $0 }
 
-                    expect(error).toEventuallyNot(beNil())
+                    expect{error}.toEventuallyNot(beNil())
                     expect(error?.domain) == MosesErrorDomain
                     expect(error?.code) == MosesError.InvalidResponse.rawValue
                     expect(error?.localizedFailureReason).to(contain("token_type"))
@@ -172,7 +172,7 @@ class MosesSpec : QuickSpec {
                     var error: NSError? = nil
                     request.failure { error = $0 }
 
-                    expect(error).toEventuallyNot(beNil())
+                    expect{error}.toEventuallyNot(beNil())
                     expect(error?.domain) == MosesErrorDomain
                     expect(error?.code) == MosesError.InvalidResponse.rawValue
                     expect(error?.localizedFailureReason).to(contain("access_token"))
@@ -189,7 +189,7 @@ class MosesSpec : QuickSpec {
                         var error: NSError? = nil
                         request.failure { error = $0 }
 
-                        expect(error).toEventuallyNot(beNil())
+                        expect{error}.toEventuallyNot(beNil())
                         expect(error?.domain) == MosesErrorDomain
                         expect(error?.code) == OAuth2Error.InvalidRequest.rawValue
                     }
@@ -203,7 +203,7 @@ class MosesSpec : QuickSpec {
                         var error: NSError? = nil
                         request.failure { error = $0 }
 
-                        expect(error).toEventuallyNot(beNil())
+                        expect{error}.toEventuallyNot(beNil())
                         expect(error?.domain) == MosesErrorDomain
                         expect(error?.code) == OAuth2Error.InvalidClient.rawValue
                     }
@@ -217,7 +217,7 @@ class MosesSpec : QuickSpec {
                         var error: NSError? = nil
                         request.failure { error = $0 }
 
-                        expect(error).toEventuallyNot(beNil())
+                        expect{error}.toEventuallyNot(beNil())
                         expect(error?.domain) == MosesErrorDomain
                         expect(error?.code) == OAuth2Error.InvalidGrant.rawValue
                     }
@@ -231,7 +231,7 @@ class MosesSpec : QuickSpec {
                         var error: NSError? = nil
                         request.failure { error = $0 }
 
-                        expect(error).toEventuallyNot(beNil())
+                        expect{error}.toEventuallyNot(beNil())
                         expect(error?.domain) == MosesErrorDomain
                         expect(error?.code) == OAuth2Error.UnauthorizedClient.rawValue
                     }
@@ -245,7 +245,7 @@ class MosesSpec : QuickSpec {
                         var error: NSError? = nil
                         request.failure { error = $0 }
 
-                        expect(error).toEventuallyNot(beNil())
+                        expect{error}.toEventuallyNot(beNil())
                         expect(error?.domain) == MosesErrorDomain
                         expect(error?.code) == OAuth2Error.UnsupportedGrantType.rawValue
                     }
@@ -259,7 +259,7 @@ class MosesSpec : QuickSpec {
                         var error: NSError? = nil
                         request.failure { error = $0 }
 
-                        expect(error).toEventuallyNot(beNil())
+                        expect{error}.toEventuallyNot(beNil())
                         expect(error?.domain) == MosesErrorDomain
                         expect(error?.code) == OAuth2Error.InvalidScope.rawValue
                     }
@@ -273,7 +273,7 @@ class MosesSpec : QuickSpec {
                         var error: NSError? = nil
                         request.failure { error = $0 }
 
-                        expect(error).toEventuallyNot(beNil())
+                        expect{error}.toEventuallyNot(beNil())
                         expect(error?.localizedDescription) == "description"
                     }
 
@@ -286,8 +286,8 @@ class MosesSpec : QuickSpec {
                         var error: NSError? = nil
                         request.failure { error = $0 }
 
-                        expect(error).toEventuallyNot(beNil())
-                        expect(error?.userInfo?[MosesErrorUriKey] as String?) == "error_uri"
+                        expect{error}.toEventuallyNot(beNil())
+                        expect(error?.userInfo?[MosesErrorUriKey] as! String?) == "error_uri"
                     }
                 }
             }
@@ -310,7 +310,7 @@ class MosesSpec : QuickSpec {
                 let body = json(["access_token": "access_token", "refresh_token": "refresh_token", "token_type": "token_type", "expires_in": 3600])
                 httpClient.completionHandler(body, response, nil)
 
-                expect(credential).toEventuallyNot(beNil())
+                expect{credential}.toEventuallyNot(beNil())
                 expect(credential?.accessToken) == "access_token"
                 expect(credential?.refreshToken) == "refresh_token"
                 expect(credential?.tokenType) == "token_type"
@@ -327,7 +327,7 @@ class MosesSpec : QuickSpec {
                     var credential: OAuthCredential? = nil
                     request.success { credential = $0 }
 
-                    expect(credential).toEventuallyNot(beNil())
+                    expect{credential}.toEventuallyNot(beNil())
                     expect(credential?.accessToken) == "access_token"
                     expect(credential?.tokenType) == "token_type"
                     expect(credential?.expiration?.timeIntervalSinceNow) ≈ 3600 ± 1
@@ -342,7 +342,7 @@ class MosesSpec : QuickSpec {
                     var credential: OAuthCredential? = nil
                     request.success { credential = $0 }
 
-                    expect(credential).toEventuallyNot(beNil())
+                    expect{credential}.toEventuallyNot(beNil())
                     expect(credential?.accessToken) == "access_token"
                     expect(credential?.refreshToken) == "refresh_token"
                     expect(credential?.tokenType) == "token_type"
