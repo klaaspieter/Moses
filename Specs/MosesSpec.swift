@@ -13,7 +13,7 @@ class FakeHTTPClient : HTTPClient {
 
 // This is a workaround for a compiler bug. Doing this in a beforeEach block
 // fails to compile for some reason.
-func makeRequest(client: Moses, httpClient: FakeHTTPClient) -> OAuth2Request {
+func makeRequest(client: OAuth2Client, httpClient: FakeHTTPClient) -> OAuth2Request {
     let request = client.authorize("test", "test")
     waitUntil { done in
         if httpClient.completionHandler != nil {
@@ -29,31 +29,31 @@ func json(object: AnyObject) -> NSData {
 
 class MosesSpec : QuickSpec {
     override func spec() {
-        var client: Moses! = nil
+        var client: OAuth2Client! = nil
         var httpClient: FakeHTTPClient! = nil
 
         beforeEach {
             httpClient = FakeHTTPClient()
-            client = Moses("http://endpoint", clientID: "client_id", httpClient: httpClient)
+            client = OAuth2Client("http://endpoint", clientID: "client_id", httpClient: httpClient)
         }
 
         it("requires an endpoint and client id") {
             let endpoint = NSURL(string: "http://annema.me/oauth2/token")!
             let clientID = "clientID"
-            let client = Moses(endpoint, clientID: clientID)
+            let client = OAuth2Client(endpoint, clientID: clientID)
             expect(client.endpoint.URLString) == endpoint.URLString
             expect(client.clientID) == clientID
         }
 
         it("accepts strings as endpoint") {
             let endpoint = "http://annema.me/oauth2/token"
-            let client = Moses(endpoint, clientID: "id")
+            let client = OAuth2Client(endpoint, clientID: "id")
             expect(client.endpoint.URLString) == endpoint
         }
 
         it("can be initialized with a HTTP client") {
             let httpClient = FakeHTTPClient()
-            let client = Moses("http://endpoint/oauth2/token", clientID: "id", httpClient: httpClient)
+            let client = OAuth2Client("http://endpoint/oauth2/token", clientID: "id", httpClient: httpClient)
             expect(client.httpClient).toNot(beNil())
         }
 
@@ -61,7 +61,7 @@ class MosesSpec : QuickSpec {
             let endpoint = "http://endpoint/oauth2/token"
             let httpClient = FakeHTTPClient()
             let clientID = "client_id"
-            let client = Moses("http://endpoint/oauth2/token", clientID: clientID, httpClient: httpClient)
+            let client = OAuth2Client("http://endpoint/oauth2/token", clientID: clientID, httpClient: httpClient)
             let username = "klaaspieter@annema.me"
             let password = "password"
 

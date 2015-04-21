@@ -221,7 +221,7 @@ public func ==(lhs: OAuthCredential, rhs: OAuthCredential) -> Bool {
 }
 
 
-public struct Moses {
+public struct OAuth2Client {
     public let endpoint: URLStringConvertible
     public let httpClient: HTTPClient
     public let clientID: String
