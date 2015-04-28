@@ -171,8 +171,18 @@ public class URLRequestClient : HTTPClient {
     func buildRequest(url: URLStringConvertible, parameters: [String: String]) -> NSURLRequest {
         let request = NSMutableURLRequest(URL: NSURL(string: url.URLString)!)
         request.HTTPMethod = "POST"
-        request.HTTPBody = join("&", map(parameters) { (key, value) in "\(key)=\(value)" }).dataUsingEncoding(NSUTF8StringEncoding)
+        request.HTTPBody = join("&", map(parameters) { (key, value) in "\(self.encode(key, value))" }).dataUsingEncoding(NSUTF8StringEncoding)
         return request
+    }
+
+    func encode(key: String, _ value: String) -> String {
+        return "\(self.escape(key))=\(self.escape(value))"
+    }
+
+    // Taken from Alamofire
+    func escape(string: String) -> String {
+        let legalURLCharactersToBeEscaped: CFStringRef = ":&=;+!@#$()',*"
+        return CFURLCreateStringByAddingPercentEscapes(nil, string, nil, legalURLCharactersToBeEscaped, CFStringBuiltInEncodings.UTF8.rawValue) as String
     }
 }
 
