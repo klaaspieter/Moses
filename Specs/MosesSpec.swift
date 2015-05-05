@@ -4,9 +4,11 @@ import Nimble
 import Moses
 
 class FakeHTTPClient : HTTPClient {
+    var requests: [String] = []
     var completionHandler: ((NSData!, NSURLResponse!, NSError!) -> Void)!
 
     func post(url: URLStringConvertible, parameters: [String: String], completionHandler: (NSData!, NSURLResponse!, NSError!) -> Void) {
+        self.requests.append(url.URLString)
         self.completionHandler = completionHandler
     }
 }
@@ -66,7 +68,8 @@ class MosesSpec : QuickSpec {
             let password = "password"
 
             it("makes a request to the endpoint") {
-                expect(client.authorize(username, password).url.URLString) == endpoint
+                client.authorize(username, password)
+                expect(httpClient.requests).toEventually(equal([endpoint]))
             }
 
             it("provides the username as a parameter") {
