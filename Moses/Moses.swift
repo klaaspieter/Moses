@@ -333,7 +333,9 @@ public struct OAuth2Client {
             "client_id": self.clientID,
             "grant_type": "refresh_token"
         ]
-        return Request(url: self.endpoint, parameters: parameters, resolver: { credential, error in
+        return Request(url: self.endpoint, parameters: parameters, resolver: { succeed, fail in
+            self.httpClient.post(self.endpoint, parameters: parameters) { data, response, error in
+            }
         })
     }
 }

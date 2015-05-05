@@ -361,7 +361,8 @@ class MosesSpec : QuickSpec {
             let token = "refresh_token"
 
             it("makes a request to the endpoint") {
-                expect(client.reauthorize(token).url.URLString) == endpoint
+                client.reauthorize(token)
+                expect(httpClient.requests).toEventually(equal([endpoint]))
             }
 
             it("provides the refresh token as a parameter") {
