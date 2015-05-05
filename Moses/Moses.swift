@@ -322,4 +322,14 @@ public struct OAuth2Client {
             }
         }
     }
+
+    public func reauthorize(refreshToken: String) -> OAuth2Request {
+        let parameters = [
+            "refresh_token": refreshToken,
+            "client_id": self.clientID,
+            "grant_type": "refresh_token"
+        ]
+        return Request(url: self.endpoint, parameters: parameters, resolver: { credential, error in
+        })
+    }
 }
