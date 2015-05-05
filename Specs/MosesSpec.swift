@@ -24,6 +24,16 @@ func makeRequest(client: OAuth2Client, httpClient: FakeHTTPClient) -> OAuth2Requ
     }
     return request
 }
+func makeReauthorizeRequest(client: OAuth2Client, httpClient: FakeHTTPClient) -> OAuth2Request {
+    let request = client.reauthorize("refresh_token")
+    waitUntil { done in
+        if httpClient.completionHandler != nil {
+            done()
+        }
+    }
+    return request
+}
+
 
 func json(object: AnyObject) -> NSData {
     return NSJSONSerialization.dataWithJSONObject(object, options: NSJSONWritingOptions.allZeros, error: nil)!
@@ -379,6 +389,39 @@ class MosesSpec : QuickSpec {
                 let parameters = client.reauthorize(token).parameters
                 expect(parameters["grant_type"]) == "refresh_token"
             }
+
+            it("provides the credential if the request succeeds") {
+                let request = makeReauthorizeRequest(client, httpClient)
+                let response = NSHTTPURLResponse(URL: NSURL(string: client.endpoint.URLString)!,
+                    statusCode: 200, HTTPVersion: nil, headerFields: nil)
+
+                var credential: OAuthCredential? = nil
+                request.success { credential = $0 }
+
+                let body = json(["access_token": "access_token", "refresh_token": "refresh_token", "token_type": "token_type", "expires_in": 3600])
+                httpClient.completionHandler(body, response, nil)
+
+                expect{credential}.toEventuallyNot(beNil())
+                expect(credential?.accessToken) == "access_token"
+                expect(credential?.refreshToken) == "refresh_token"
+                expect(credential?.tokenType) == "token_type"
+                expect(credential?.expiration?.timeIntervalSinceNow) ≈ 3600 ± 1
+            }
+
+            it("provides the error if the request fails") {
+                let request = makeReauthorizeRequest(client, httpClient)
+
+                let error = NSError()
+                httpClient.completionHandler(nil, nil, error)
+
+                var called = false
+                request.failure {
+                    expect($0) === error
+                    called = true
+                }
+                expect{called}.toEventually(beTrue())
+            }
+
         }
     }
 }

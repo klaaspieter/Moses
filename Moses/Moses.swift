@@ -335,6 +335,7 @@ public struct OAuth2Client {
         ]
         return Request(url: self.endpoint, parameters: parameters, resolver: { succeed, fail in
             self.httpClient.post(self.endpoint, parameters: parameters) { data, response, error in
+                self.handleResponse(data, response: response, error: error, succeed: succeed, fail: fail)
             }
         })
     }
