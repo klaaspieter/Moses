@@ -289,37 +289,54 @@ public struct OAuth2Client {
         return NSError(domain: MosesErrorDomain, code: errorCode.rawValue, userInfo: userInfo)
     }
 
+    func handleResponse(data: NSData!, response: NSURLResponse!, error: NSError!, succeed: (OAuthCredential) -> (), fail: (NSError) ->()) {
+        if let error = error {
+            return fail(error)
+        }
+
+        let httpResponse = response as! NSHTTPURLResponse
+        if contains(200..<300, httpResponse.statusCode) || contains(400..<500, httpResponse.statusCode) {
+            let body = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.allZeros, error: nil) as! NSDictionary
+            if let error: AnyObject = body["error"] {
+                fail(self.buildError(body))
+            } else {
+                switch self.buildToken(body) {
+                case let .Failure(error):
+                    fail(error.unbox)
+
+                case let .Success(token):
+                    succeed(token.unbox)
+                }
+            }
+        } else {
+            var userInfo = [NSLocalizedDescriptionKey: "Expected status code in (200-299) or (400-499) got \(httpResponse.statusCode)"]
+            if let suggestion = NSString(data: data, encoding: NSUTF8StringEncoding) {
+                userInfo[NSLocalizedRecoverySuggestionErrorKey] = suggestion as String
+            }
+
+            fail(NSError(domain: MosesErrorDomain, code: MosesError.InvalidResponse.rawValue, userInfo: userInfo))
+        }
+    }
+
     public func authorize(username: String, _ password: String) -> OAuth2Request {
         let parameters = buildParameters(username, password)
         return Request(url: self.endpoint, parameters: parameters) { (succeed: (OAuthCredential) -> Void, fail: (NSError) -> Void) in
             self.httpClient.post(self.endpoint, parameters: parameters) { data, response, error in
-                if let error = error {
-                    return fail(error)
-                }
-
-                let httpResponse = response as! NSHTTPURLResponse
-                if contains(200..<300, httpResponse.statusCode) || contains(400..<500, httpResponse.statusCode) {
-                    let body = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.allZeros, error: nil) as! NSDictionary
-                    if let error: AnyObject = body["error"] {
-                        fail(self.buildError(body))
-                    } else {
-                        switch self.buildToken(body) {
-                        case let .Failure(error):
-                            fail(error.unbox)
-
-                        case let .Success(token):
-                            succeed(token.unbox)
-                        }
-                    }
-                } else {
-                    var userInfo = [NSLocalizedDescriptionKey: "Expected status code in (200-299) or (400-499) got \(httpResponse.statusCode)"]
-                    if let suggestion = NSString(data: data, encoding: NSUTF8StringEncoding) {
-                        userInfo[NSLocalizedRecoverySuggestionErrorKey] = suggestion as String
-                    }
-
-                    fail(NSError(domain: MosesErrorDomain, code: MosesError.InvalidResponse.rawValue, userInfo: userInfo))
-                }
+                self.handleResponse(data, response: response, error: error, succeed: succeed, fail: fail)
             }
         }
+    }
+
+    public func reauthorize(refreshToken: String) -> OAuth2Request {
+        let parameters = [
+            "refresh_token": refreshToken,
+            "client_id": self.clientID,
+            "grant_type": "refresh_token"
+        ]
+        return Request(url: self.endpoint, parameters: parameters, resolver: { succeed, fail in
+            self.httpClient.post(self.endpoint, parameters: parameters) { data, response, error in
+                self.handleResponse(data, response: response, error: error, succeed: succeed, fail: fail)
+            }
+        })
     }
 }
