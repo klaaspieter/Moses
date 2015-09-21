@@ -17,7 +17,7 @@ class MockURLSession : NSURLSession {
 
     var dataTask = MockDataTask()
 
-    override func dataTaskWithRequest(request: NSURLRequest, completionHandler: ((NSData!, NSURLResponse!, NSError!) -> Void)?) -> NSURLSessionDataTask {
+    override func dataTaskWithRequest(request: NSURLRequest, completionHandler: ((NSData?, NSURLResponse?, NSError?) -> Void)) -> NSURLSessionDataTask {
         self.request = request
         self.completionHandler = completionHandler
         return dataTask
@@ -55,7 +55,6 @@ class URLRequestClientSpec : QuickSpec {
         }
 
         it("url encodes parameters") {
-            let randomPassword = ""
             self.client.post("http://fake", parameters: ["k^e y": "v+ /a&l^u!e"]) { data, response, error in }
             expect(stringFromData(self.session.request.HTTPBody!)).toEventually(equal("k%5Ee%20y=v%2B%20/a%26l%5Eu%21e"))
         }

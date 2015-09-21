@@ -14,7 +14,7 @@ extension String: URLStringConvertible {
 
 extension NSURL: URLStringConvertible {
     public var URLString: String {
-        return absoluteString!
+        return absoluteString
     }
 }
 
@@ -46,7 +46,7 @@ public enum OAuth2Error: Int {
     case InvalidScope
     case Unknown
 
-    static func create(#statusCode: String) -> OAuth2Error {
+    static func create(statusCode statusCode: String) -> OAuth2Error {
         switch statusCode {
         case "invalid_request":
             return .InvalidRequest
@@ -153,7 +153,7 @@ public class Request : OAuth2Request {
 }
 
 public protocol HTTPClient {
-    func post(url: URLStringConvertible, parameters: [String: String], completionHandler: (NSData!, NSURLResponse!, NSError!) -> Void)
+    func post(url: URLStringConvertible, parameters: [String: String], completionHandler: (NSData?, NSURLResponse?, NSError?) -> Void)
 }
 
 public class URLRequestClient : HTTPClient {
@@ -164,14 +164,14 @@ public class URLRequestClient : HTTPClient {
         self.session = session
     }
 
-    public func post(url: URLStringConvertible, parameters: [String: String], completionHandler: (NSData!, NSURLResponse!, NSError!) -> Void) {
+    public func post(url: URLStringConvertible, parameters: [String: String], completionHandler: (NSData?, NSURLResponse?, NSError?) -> Void) {
         self.session.dataTaskWithRequest(self.buildRequest(url, parameters: parameters), completionHandler: completionHandler).resume()
     }
 
     func buildRequest(url: URLStringConvertible, parameters: [String: String]) -> NSURLRequest {
         let request = NSMutableURLRequest(URL: NSURL(string: url.URLString)!)
         request.HTTPMethod = "POST"
-        request.HTTPBody = join("&", map(parameters) { (key, value) in "\(self.encode(key, value))" }).dataUsingEncoding(NSUTF8StringEncoding)
+        request.HTTPBody = parameters.map { (key, value) in "\(self.encode(key, value))" }.joinWithSeparator("&").dataUsingEncoding(NSUTF8StringEncoding)
         return request
     }
 
@@ -200,7 +200,7 @@ public struct OAuthCredential {
     }
 }
 
-extension OAuthCredential : Printable {
+extension OAuthCredential : CustomStringConvertible {
     public var description: String {
         return "<OAuthCredential accessToken: \"\(accessToken)\" tokenType: \"\(tokenType)\" refreshToken: \"\(refreshToken)\" expiration: \"\(expiration)\">"
     }
@@ -251,7 +251,7 @@ public struct OAuth2Client {
     }
 
     func buildToken(body: NSDictionary) -> Result<OAuthCredential, NSError> {
-        let missingKeys = ["access_token", "token_type"].filter { !contains(body.allKeys as! [String], $0) }
+        let missingKeys = ["access_token", "token_type"].filter { !(body.allKeys as! [String]).contains($0) }
 
         if missingKeys.count > 0 {
             let failureReason = "Required key(s) missing: \(missingKeys)"
@@ -295,9 +295,9 @@ public struct OAuth2Client {
         }
 
         let httpResponse = response as! NSHTTPURLResponse
-        if contains(200..<300, httpResponse.statusCode) || contains(400..<500, httpResponse.statusCode) {
-            let body = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.allZeros, error: nil) as! NSDictionary
-            if let error: AnyObject = body["error"] {
+        if (200..<300).contains(httpResponse.statusCode) || (400..<500).contains(httpResponse.statusCode) {
+            let body = (try! NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions())) as! NSDictionary
+            if body["error"] != nil {
                 fail(self.buildError(body))
             } else {
                 switch self.buildToken(body) {

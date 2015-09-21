@@ -12,7 +12,7 @@ class RequestSpec : QuickSpec {
                 let expectation = self.expectationWithDescription("")
 
                 var actualCredential: OAuthCredential? = nil
-                let request = Request(url: "http://fake", parameters: [:]) { (succeed: (OAuthCredential) -> Void, fail: (NSError) -> Void) in
+                Request(url: "http://fake", parameters: [:]) { (succeed: (OAuthCredential) -> Void, fail: (NSError) -> Void) in
                     succeed(expectedCredential)
                 }.success { (c) in
                     actualCredential = c
@@ -28,11 +28,13 @@ class RequestSpec : QuickSpec {
                 var called = false
 
                 let expectation = self.expectationWithDescription("Success closure was called")
-                let request = Request(url: "http://fake", parameters: [:]) { (succeed: (OAuthCredential) -> Void, fail: (NSError) -> Void) in
+                Request(url: "http://fake", parameters: [:]) { (succeed: (OAuthCredential) -> Void, fail: (NSError) -> Void) in
                     succeed(OAuthCredential(accessToken: "", refreshToken: "", tokenType: "", expiration: NSDate()))
-                    }.failure { (error) in
-                        called = true
-                        expectation.fulfill()
+                }.failure { (error) in
+                    called = true
+                    expectation.fulfill()
+                }.success { _ in
+                    expectation.fulfill()
                 }
 
                 self.waitForExpectationsWithTimeout(0.1) { (_) in
@@ -42,8 +44,8 @@ class RequestSpec : QuickSpec {
 
             // Disabled because it currently crashes
             xit("cannot succeed twice") {
-                let expectation = self.expectationWithDescription("")
-                let request = Request(url: "http://fake", parameters: [:]) { (succeed: (OAuthCredential) -> Void, fail: (NSError) -> Void) in
+                self.expectationWithDescription("")
+                let _ = Request(url: "http://fake", parameters: [:]) { (succeed: (OAuthCredential) -> Void, fail: (NSError) -> Void) in
                     succeed(OAuthCredential(accessToken: "", refreshToken: "", tokenType: "", expiration: NSDate()))
 
                     expect {
@@ -73,8 +75,8 @@ class RequestSpec : QuickSpec {
                 var error: NSError? = nil
                 let expectation = self.expectationWithDescription("Failure closure was called")
 
-                let request = Request(url: "http://fake", parameters: [:]) { (succeed: (OAuthCredential) -> Void, fail: (NSError) -> Void) in
-                    fail(NSError())
+                Request(url: "http://fake", parameters: [:]) { (succeed: (OAuthCredential) -> Void, fail: (NSError) -> Void) in
+                    fail(NSError(domain: "", code: 0, userInfo: nil))
                 }.failure { (e: NSError) in
                     error = e
                     expectation.fulfill()
@@ -89,26 +91,28 @@ class RequestSpec : QuickSpec {
                 var called = false
 
                 let expectation = self.expectationWithDescription("Success closure was called")
-                let request = Request(url: "http://fake", parameters: [:]) { (succeed: (OAuthCredential) -> Void, fail: (NSError) -> Void) in
-                    fail(NSError())
+                Request(url: "http://fake", parameters: [:]) { (succeed: (OAuthCredential) -> Void, fail: (NSError) -> Void) in
+                    fail(NSError(domain: "", code: 0, userInfo: nil))
                 }.success { (credential) in
                     called = true
                     expectation.fulfill()
+                }.failure { _ in
+                    expectation.fulfill()
                 }
 
-                self.waitForExpectationsWithTimeout(0) { (_) in
+                self.waitForExpectationsWithTimeout(0.1) { (_) in
                     if (called) { fail("Success closure was called") }
                 }
             }
 
             // Disabled because it currently crashes
             xit("cannot fail twice") {
-                let expectation = self.expectationWithDescription("")
-                let request = Request(url: "http://fake", parameters: [:]) { (succeed: (OAuthCredential) -> Void, fail: (NSError) -> Void) in
-                    fail(NSError())
+                self.expectationWithDescription("")
+                let _ = Request(url: "http://fake", parameters: [:]) { (succeed: (OAuthCredential) -> Void, fail: (NSError) -> Void) in
+                    fail(NSError(domain: "", code: 0, userInfo: nil))
 
                     expect {
-                        fail(NSError())
+                        fail(NSError(domain: "", code: 0, userInfo: nil))
                     }.to(raiseException(named: NSInternalInconsistencyException))
                 }
 
@@ -118,7 +122,7 @@ class RequestSpec : QuickSpec {
             it("calls the failure closure on the main thread") {
                 let expectation = self.expectationWithDescription("")
                 let request = Request(url: "http://fake", parameters: [:]) { (succeed: (OAuthCredential) -> Void, fail: (NSError) -> Void) in
-                    fail(NSError())
+                    fail(NSError(domain: "", code: 0, userInfo: nil))
                 }
                 request.failure { (_) in
                     expect(NSThread.isMainThread()).to(beTrue())
